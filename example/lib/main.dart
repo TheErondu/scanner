@@ -1,23 +1,40 @@
 import 'dart:async';
-
+import 'dart:io';
+import 'package:flutter_barcode_scanner_example/item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
-void main() => runApp(MyApp());
+void main(){
+    HttpOverrides.global = MyHttpOverrides();
+    runApp( MyApp());
+}
+
+
+
+class MyHttpOverrides extends HttpOverrides{
+  @override
+  HttpClient createHttpClient(SecurityContext? context){
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
+  }
+}
 
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
+  
 }
 
 class _MyAppState extends State<MyApp> {
   String _scanBarcode = 'Unknown';
+  dynamic barcode;
 
   @override
   void initState() {
     super.initState();
   }
+  
 
   Future<void> startBarcodeScanStream() async {
     FlutterBarcodeScanner.getBarcodeStreamReceiver(
@@ -68,11 +85,15 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+ 
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
         home: Scaffold(
-            appBar: AppBar(title: const Text('Barcode scan')),
+            appBar: AppBar(title: const Text('Brave Barcode Scanner'),
+            backgroundColor: Colors.blueAccent,
+            ),
             body: Builder(builder: (BuildContext context) {
               return Container(
                   alignment: Alignment.center,
@@ -89,9 +110,27 @@ class _MyAppState extends State<MyApp> {
                         ElevatedButton(
                             onPressed: () => startBarcodeScanStream(),
                             child: Text('Start barcode scan stream')),
+                              if (_scanBarcode != 'Unknown'  || (_scanBarcode == '-1' ))
                         Text('Scan result : $_scanBarcode\n',
-                            style: TextStyle(fontSize: 20))
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.green
+                              )
+                              ),
+                                if (_scanBarcode != 'Unknown')
+                        ElevatedButton(
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ItemDetails(barcode:_scanBarcode))),
+                            child: Text('Get Item Details')),
+                            
+                          if (_scanBarcode == 'Unknown' || (_scanBarcode == '-1' ))
+                             Text('Scan result : $_scanBarcode\n',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.red
+                              )
+                              ),
                       ]));
             })));
   }
 }
+
